@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use thiserror::Error;
 
 #[derive(Serialize, Deserialize)]
 pub struct Question {
@@ -6,7 +7,7 @@ pub struct Question {
     pub description: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, sqlx::FromRow)]
 pub struct QuestionDetail {
     pub question_uuid: String,
     pub title: String,
@@ -25,7 +26,7 @@ pub struct Answer {
     pub content: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, sqlx::FromRow)]
 pub struct AnswerDetail {
     pub answer_uuid: String,
     pub question_uuid: String,
@@ -36,4 +37,18 @@ pub struct AnswerDetail {
 #[derive(Serialize, Deserialize)]
 pub struct AnswerId {
     pub answer_uuid: String,
+}
+
+#[derive(Error, Debug)]
+pub enum DBError {
+    #[error("Invalid UUID provided: {0}")]
+    InvalidUUID(String),
+
+    #[error("Database error occurred")]
+    Other(Box<dyn std::error::Error + Send + Sync>),
+}
+
+// source: https://www.postgresql.org/docs/current/errcodes-appendix.html
+pub mod postgres_error_codes {
+    pub const FOREIGN_KEY_VIOLATION: &str = "23503";
 }
